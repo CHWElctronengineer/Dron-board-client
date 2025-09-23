@@ -1,0 +1,19 @@
+/* App.css */
+.App {
+  font-family: sans-serif;
+}
+
+.App-header {
+  background-color: #282c34; /* 어두운 배경색 */
+  padding: 20px;
+  color: white; /* 흰색 글씨 */
+  text-align: center;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto; /* 콘텐츠를 중앙에 배치 */
+  padding: 0 20px;
+}

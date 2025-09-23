@@ -1,0 +1,173 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header h1 {
+  font-size: 2rem;
+  text-align: center;
+  color: #1e3a8a;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+input[type="file"] {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* 모든 버튼에 대한 기본 스타일 */
+button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 모든 버튼에 대한 기본 호버 스타일 */
+button:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.status-message {
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.photo-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  position: relative;
+  cursor: pointer; /* 클릭할 수 있다는 것을 알려주기 위해 커서 모양 변경 */
+  transition: transform 0.2s;
+}
+
+.photo-item:hover {
+  transform: scale(1.03); /* 마우스를 올리면 살짝 커지는 효과 */
+}
+
+.photo-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+/* 'x' 삭제 버튼 스타일 */
+.delete-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  
+  /* ✅ [수정] 내부 여백을 제거하여 완벽한 원으로 만듭니다. */
+  padding: 0; 
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button.delete-button:hover {
+  background-color: rgba(239, 68, 68, 0.8); /* 마우스 올리면 반투명 빨강 */
+}
+
+/* 이미지 하단 파일명 스타일은 이쪽으로 이동 */
+.photo-item p {
+  padding: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.modal-backdrop {
+  position: fixed; /* 화면 전체에 고정 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* 반투명 검정 배경 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* 다른 요소들보다 위에 있도록 설정 */
+}
+
+/* ✅ [추가] 모달 이미지 스타일 */
+.modal-content {
+  max-width: 90vw;  /* 화면 너비의 90%를 넘지 않도록 */
+  max-height: 90vh; /* 화면 높이의 90%를 넘지 않도록 */
+  object-fit: contain;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* ✅ [추가] 모달 닫기 버튼 스타일 */
+.modal-close-button {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: white;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
