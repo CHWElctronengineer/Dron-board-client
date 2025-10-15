@@ -5,6 +5,18 @@ import './index.css'; // 이 컴포넌트에 적용될 CSS 스타일을 불러�
 // API 요청의 기본 URL을 상수로 정의하여 관리의 용이성을 높입니다.
 const API_BASE_URL = 'http://192.168.0.141:8084';
 
+const locations = [1, 2, 3, 4, 5, 6];
+
+const processes = [
+    { id: 'PROC_CUT', name: '절단' },
+    { id: 'PROC_PROC', name: '가공' },
+    { id: 'PROC_ASSY', name: '조립' },
+    { id: 'PROC_PAINT', name: '용접' },
+    { id: 'PROC_LOAD', name: '도장' },
+    { id: 'PROC_LAUNCH', name: '출하' },
+];
+
+
 // 드론 사진 업로드 및 조회를 위한 메인 애플리케이션 컴포넌트입니다.
 export default function App() {
   // --- 상태(State) 정의 ---
@@ -16,6 +28,10 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState('');
   // 사용자가 클릭하여 상세히 볼 사진의 정보를 저장하는 상태입니다. (모달 제어용)
   const [selectedImage, setSelectedImage] = useState(null);
+  // 선택된 위치 ID를 저장하는 상태
+  const [selectedLocationId, setSelectedLocationId] = useState('');
+  // 선택된 공정 ID를 저장하는 상태
+  const [selectedProcessId, setSelectedProcessId] = useState('');
 
   /**
    * 서버로부터 모든 사진 목록을 비동기적으로 불러와 photos 상태를 업데이트하는 함수입니다.
@@ -51,38 +67,50 @@ export default function App() {
   };
 
   /**
-   * '업로드' 버튼 클릭 시 선택된 파일을 서버로 전송하는 함수입니다.
+   * '업로드' 버튼 클릭 시 선택된 파일과 데이터를 서버로 전송하는 함수입니다.
    */
   const handleUpload = async () => {
-    // 선택된 파일이 없으면 사용자에게 알리고 함수를 종료합니다.
-    if (!selectedFile) {
-      alert('파일을 먼저 선택해주세요.');
-      return;
-    }
-    // 사용자에게 업로드가 진행 중임을 알립니다.
-    setStatusMessage('업로드 중...');
-    
-    // 파일 전송을 위해 FormData 객체를 생성합니다.
-    const formData = new FormData();
-    // 'file'이라는 키로 선택된 파일 데이터를 FormData에 추가합니다.
-    formData.append('file', selectedFile);
+      if (!selectedFile) {
+          alert('파일을 먼저 선택해주세요.');
+          return;
+      }
 
-    try {
-      // API 서버에 POST 요청으로 파일 데이터를 전송합니다.
-      const response = await axios.post(`${API_BASE_URL}/api/images/upload`, formData);
-      // 업로드 성공 시, 서버로부터 받은 성공 메시지를 화면에 표시합니다.
-      setStatusMessage(response.data);
-      // 파일 선택 상태를 초기화합니다.
-      setSelectedFile(null);
-      // 파일 입력 필드의 값을 초기화하여 동일한 파일을 다시 선택할 수 있도록 합니다.
-      document.querySelector('input[type="file"]').value = '';
-      // 파일 목록을 새로고침하여 방금 업로드한 사진을 화면에 표시합니다.
-      fetchPhotos();
-    } catch (err) {
-      // 업로드 실패 시, 콘솔에 에러를 기록하고 실패 메시지를 설정합니다.
-      console.error("업로드 실패", err);
-      setStatusMessage('업로드에 실패했습니다.');
-    }
+      // 위치가 선택되었는지 확인하는 유효성 검사를 추가합니다.
+      if (!selectedLocationId) {
+          alert('사진을 촬영한 위치를 선택해주세요.');
+          return;
+      }
+
+      // 공정이 선택 되었는지 확인
+      if (!selectedProcessId) {
+            alert('사진이 촬영된 공정을 선택해주세요.');
+            return;
+        }
+
+      setStatusMessage('업로드 중...');
+      
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      // ✅ FormData에 processId와 locationId를 추가합니다.
+      formData.append('processId', selectedProcessId);
+      // locationId는 현재 UI에서 선택하지 않으므로, 고정된 값(1)을 보내줍니다.
+      formData.append('locationId', 1);
+
+      try {
+          const response = await axios.post(`${API_BASE_URL}/api/images/upload`, formData);
+          setStatusMessage(response.data);
+          
+          // ✅ 성공 시 모든 입력 상태 초기화
+            setSelectedFile(null);
+            setSelectedProcessId('');
+            setSelectedLocationId('');
+            document.querySelector('input[type="file"]').value = '';
+          
+          fetchPhotos();
+      } catch (err) {
+          console.error("업로드 실패", err);
+          setStatusMessage('업로드에 실패했습니다.');
+      }
   };
 
   /**
@@ -108,84 +136,93 @@ export default function App() {
 
   // 화면에 렌더링될 JSX를 반환합니다.
   return (
-    // 최상위 요소로 React Fragment(<>)를 사용하여 모달과 메인 컨텐츠를 감쌉니다.
     <>
-      <div className="container">
-        <header>
-          <h1>📸 드론 사진 업로더</h1>
-        </header>
-        
-        {/* 사진 업로드 섹션 */}
-        <section className="card">
-          <h2>새 사진 업로드</h2>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
-          <button onClick={handleUpload} disabled={!selectedFile}>
-            업로드
-          </button>
-          {/* statusMessage가 있을 때만 메시지를 화면에 표시합니다. */}
-          {statusMessage && <p className="status-message">{statusMessage}</p>}
-        </section>
+            <div className="container">
+                <header>
+                    <h1>📸 드론 사진 업로더</h1>
+                </header>
+                
+                {/* 사진 업로드 섹션 */}
+                <section className="card">
+                    <h2>새 사진 업로드</h2>
+                    <div className="upload-controls"> {/* 컨트롤들을 감싸는 컨테이너 */}
+                        <input type="file" accept="image/*" onChange={handleFileChange} />
+                        
+                        {/* 위치 선택 (라디오 버튼) */}
+                        <div className="radio-group">
+                            <span>위치:</span>
+                            {locations.map(loc => (
+                                <label key={loc}>
+                                    <input
+                                        type="radio"
+                                        name="location"
+                                        value={loc}
+                                        checked={selectedLocationId === String(loc)}
+                                        onChange={(e) => setSelectedLocationId(e.target.value)}
+                                    />
+                                    {loc}
+                                </label>
+                            ))}
+                        </div>
 
-        {/* 업로드된 사진 목록 섹션 */}
-        <section className="card">
-          <h2>업로드된 사진 목록</h2>
-          {/* photos 배열의 길이를 확인하여 사진 유무에 따라 다른 UI를 보여줍니다. */}
-          {photos.length === 0 ? (
-            <p>아직 업로드된 사진이 없습니다.</p>
-          ) : (
-            <div className="photo-grid">
-              {/* photos 배열을 순회하며 각 사진 아이템을 렌더링합니다. */}
-              {photos.map((photo) => (
-                <div 
-                  key={photo.id} // React가 각 요소를 식별하기 위한 고유 key
-                  className="photo-item"
-                  onClick={() => setSelectedImage(photo)} // 아이템 클릭 시 모달을 띄우기 위해 selectedImage 상태를 업데이트
-                >
-                  <img
-                    src={`${API_BASE_URL}/api/images/${photo.id}`} // 이미지 소스 URL
-                    alt={photo.originalFilename} // 이미지가 표시되지 않을 때의 대체 텍스트
-                  />
-                  <p title={photo.originalFilename}>{photo.originalFilename}</p>
-                  
-                  {/* 삭제 버튼 */}
-                  <button 
-                    className="delete-button" 
-                    onClick={(e) => {
-                      // 이벤트 버블링을 막아 부모 div의 onClick(모달 열기)이 실행되지 않도록 합니다.
-                      e.stopPropagation(); 
-                      handleDelete(photo.id); // 삭제 함수 호출
-                    }}
-                  >
-                    x
-                  </button>
-                </div>
-              ))}
+                        {/* 공정 선택 (드롭다운) */}
+                        <select
+                            value={selectedProcessId}
+                            onChange={(e) => setSelectedProcessId(e.target.value)}
+                        >
+                            <option value="" disabled>-- 공정 선택 --</option>
+                            {processes.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
+                        </select>
+                        
+                        <button 
+                            onClick={handleUpload} 
+                            disabled={!selectedFile || !selectedLocationId || !selectedProcessId}
+                            className="upload-button"
+                        >
+                            업로드
+                        </button>
+                    </div>
+                    {statusMessage && <p className="status-message">{statusMessage}</p>}
+                </section>
+
+                {/* 업로드된 사진 목록 섹션 (변경 없음) */}
+                <section className="card">
+                    <h2>업로드된 사진 목록</h2>
+                    {photos.length === 0 ? (
+                        <p>아직 업로드된 사진이 없습니다.</p>
+                    ) : (
+                        <div className="photo-grid">
+                            {photos.map((photo) => (
+                                <div 
+                                    key={photo.id}
+                                    className="photo-item"
+                                    onClick={() => setSelectedImage(photo)}
+                                >
+                                    <img src={`${API_BASE_URL}/api/images/${photo.id}`} alt={photo.originalFilename} />
+                                    <p title={photo.originalFilename}>{photo.originalFilename}</p>
+                                    <button 
+                                        className="delete-button" 
+                                        onClick={(e) => {
+                                            e.stopPropagation(); 
+                                            handleDelete(photo.id);
+                                        }}
+                                    >
+                                        x
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
-          )}
-        </section>
-      </div>
 
-      {/* 이미지 상세 보기를 위한 모달 UI */}
-      {/* selectedImage 상태에 값이 있을 때만 모달을 렌더링합니다. */}
-      {selectedImage && (
-        // 모달 배경. 클릭 시 모달을 닫습니다.
-        <div className="modal-backdrop" onClick={() => setSelectedImage(null)}>
-          <img
-            src={`${API_BASE_URL}/api/images/${selectedImage.id}`}
-            alt={selectedImage.originalFilename}
-            className="modal-content"
-            // 이미지 자체를 클릭했을 때는 모달이 닫히지 않도록 이벤트 전파를 막습니다.
-            onClick={(e) => e.stopPropagation()} 
-          />
-          {/* 모달 닫기 버튼 */}
-          <button 
-            className="modal-close-button" 
-            onClick={() => setSelectedImage(null)}
-          >
-            &times; {/* 'x' 모양의 HTML 특수문자 */}
-          </button>
-        </div>
-      )}
-    </>
+            {/* 이미지 상세 보기를 위한 모달 UI (변경 없음) */}
+            {selectedImage && (
+                <div className="modal-backdrop" onClick={() => setSelectedImage(null)}>
+                    <img src={`${API_BASE_URL}/api/images/${selectedImage.id}`} alt={selectedImage.originalFilename} className="modal-content" onClick={(e) => e.stopPropagation()} />
+                    <button className="modal-close-button" onClick={() => setSelectedImage(null)}>&times;</button>
+                </div>
+            )}
+        </>
   );
 }
